@@ -1,0 +1,32 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+  <meta charset="UTF-8">
+  <title>Users</title>
+</head>
+<body>
+
+  <h2>Users list</h2>
+  <ul id="users"></ul>
+
+  <script>
+    async function loadUsers() {
+      const res = await fetch('/users');
+      const users = await res.json();
+
+      const ul = document.getElementById('users');
+      ul.innerHTML = '';
+
+      users.forEach(user => {
+        const li = document.createElement('li');
+        li.textContent = user.login;
+        ul.appendChild(li);
+      });
+    }
+
+    //
+    window.onload = loadUsers;
+  </script>
+
+</body>
+</html>

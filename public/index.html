@@ -1,0 +1,30 @@
+<!DOCTYPE html>
+<html>
+<body>
+  <h2>Register</h2>
+
+  <input id="login" placeholder="Login">
+  <input id="password" type="password" placeholder="Password">
+  <button onclick="register()">Register</button>
+
+<script>
+async function register() {
+  const res = await fetch('/users/register', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({
+      login: login.value,
+      password: password.value
+    })
+  });
+
+  if (res.ok) {
+    // 👉 ПЕРЕХОД НА ДРУГУЮ СТРАНИЦУ
+    window.location.href = '/users.html';
+  } else {
+    alert('Registration failed');
+  }
+}
+</script>
+</body>
+</html>
