@@ -1,0 +1,113 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+  <meta charset="UTF-8">
+  <title>Balances</title>
+
+  <style>
+    body {
+      font-family: Arial, sans-serif;
+    }
+
+    label {
+      display: block;
+      margin-top: 10px;
+    }
+
+    input {
+      padding: 5px;
+      width: 200px;
+    }
+
+    button {
+      margin-top: 10px;
+      padding: 6px 12px;
+      cursor: pointer;
+    }
+
+    .box {
+      border: 1px solid #ccc;
+      padding: 15px;
+      margin-top: 20px;
+      width: 300px;
+    }
+  </style>
+</head>
+<body>
+
+  <h2>Баланс пользователя</h2>
+
+  <label>
+    User ID:
+    <input id="userId" type="number">
+  </label>
+
+  <button onclick="loadBalance()">Показать баланс</button>
+
+  <div class="box" id="balanceBox"></div>
+
+  <h2>Начислить баланс</h2>
+
+  <label>
+    Сумма:
+    <input id="addAmount" type="number">
+  </label>
+
+  <button onclick="addBalance()">Начислить</button>
+
+  <h2>Перевод средств</h2>
+
+  <label>
+    От (User ID):
+    <input id="fromUserId" type="number">
+  </label>
+
+  <label>
+    Кому (User ID):
+    <input id="toUserId" type="number">
+  </label>
+
+  <label>
+    Сумма:
+    <input id="amount" type="number">
+  </label>
+
+  <button onclick="transfer()">Перевести</button>
+
+  <script>
+    async function loadBalance() {
+      const userId = document.getElementById('userId').value;
+      const res = await fetch(`/balances/${userId}`);
+      const data = await res.json();
+
+      document.getElementById('balanceBox').innerHTML = `
+        <p><b>Логин:</b> ${data.user.login}</p>
+        <p><b>Баланс:</b> 💰 ${data.amount}</p>
+      `;
+    }
+
+    async function addBalance() {
+      const userId = document.getElementById('userId').value;
+      const amount = document.getElementById('addAmount').value;
+
+      await fetch(`/balances/${userId}/add/${amount}`);
+      loadBalance();
+    }
+
+    async function transfer() {
+      const fromUserId = Number(document.getElementById('fromUserId').value);
+      const toUserId = Number(document.getElementById('toUserId').value);
+      const amount = Number(document.getElementById('amount').value);
+
+      await fetch('/balances/transfer', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ fromUserId, toUserId, amount }),
+      });
+
+      alert('Перевод выполнен');
+    }
+  </script>
+
+</body>
+</html>
