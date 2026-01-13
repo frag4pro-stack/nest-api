@@ -4,16 +4,19 @@ import { Repository } from 'typeorm';
 import { Balance } from './balance.entity';
 import { BalanceTransaction, TransactionType } from './balance-transaction.entity';
 import { TransferDto } from './dto/transfer.dto';
+import { DataSource } from 'typeorm';
 
 @Injectable()
 export class BalancesService {
   constructor(
-    @InjectRepository(Balance)
-    private readonly balanceRepo: Repository<Balance>,
+  @InjectRepository(Balance)
+  private readonly balanceRepo: Repository<Balance>,
 
-    @InjectRepository(BalanceTransaction)
-    private readonly txRepo: Repository<BalanceTransaction>,
-  ) {}
+  @InjectRepository(BalanceTransaction)
+  private readonly txRepo: Repository<BalanceTransaction>,
+
+  private readonly dataSource: DataSource, // ← ВОТ ЭТО ДОБАВИТЬ
+ ) {}
 
   // 🔹 GET /balances/:userId
   async getBalance(userId: number) {
@@ -55,17 +58,23 @@ export class BalancesService {
     return balance;
   }
 
-  // 🔹 POST /balances/transfer
-  async transfer(dto: TransferDto) {
-    const from = await this.balanceRepo.findOne({
-      where: { user: { id: dto.fromUserId } },
-      relations: ['user'],
-    });
+  //Гарантия целостности транзакции 🔹 POST /balances/transfer
+ async transfer(dto: TransferDto) {
+  await this.dataSource.transaction(async (manager) => {
 
-    const to = await this.balanceRepo.findOne({
-      where: { user: { id: dto.toUserId } },
-      relations: ['user'],
-    });
+    // Блокируем баланс отправителя
+    const from = await manager
+      .createQueryBuilder(Balance, 'b')
+      .setLock('pessimistic_write')
+      .where('b.userId = :userId', { userId: dto.fromUserId })
+      .getOne();
+
+    // Блокируем баланс получателя
+    const to = await manager
+      .createQueryBuilder(Balance, 'b')
+      .setLock('pessimistic_write')
+      .where('b.userId = :userId', { userId: dto.toUserId })
+      .getOne();
 
     if (!from || !to) {
       throw new BadRequestException('Пользователь не найден');
@@ -76,27 +85,27 @@ export class BalancesService {
     }
 
     from.amount = Number(from.amount) - Number(dto.amount);
-    to.amount = Number(to.amount) + Number(dto.amount);
+    to.amount   = Number(to.amount)   + Number(dto.amount);
 
+    await manager.save([from, to]);
 
-    await this.balanceRepo.save([from, to]);
-
-    await this.txRepo.save([
-      this.txRepo.create({
-        user: from.user,
+    // Лог транзакции — БЕЗ join’ов
+    await manager.save(BalanceTransaction, [
+      manager.create(BalanceTransaction, {
+        userId: dto.fromUserId,
         type: TransactionType.DEBIT,
         amount: dto.amount,
         reason: 'transfer',
       }),
-      this.txRepo.create({
-        user: to.user,
+      manager.create(BalanceTransaction, {
+        userId: dto.toUserId,
         type: TransactionType.CREDIT,
         amount: dto.amount,
         reason: 'transfer',
       }),
     ]);
+  });
 
-    return { success: true };
-  }
+  return { success: true };
+ }
 }
-
