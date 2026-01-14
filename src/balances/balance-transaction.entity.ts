@@ -2,23 +2,21 @@ import {
   Entity,
   PrimaryGeneratedColumn,
   Column,
-  ManyToOne,
   CreateDateColumn,
 } from 'typeorm';
-import { User } from '../users/entities/user.entity';
 
 export enum TransactionType {
   CREDIT = 'credit',
   DEBIT = 'debit',
 }
 
-@Entity()
+@Entity('balance_transaction')
 export class BalanceTransaction {
   @PrimaryGeneratedColumn()
   id: number;
 
-  @ManyToOne(() => User)
-  user: User;
+  @Column({ nullable: false })
+  userId: number;
 
   @Column({ type: 'enum', enum: TransactionType })
   type: TransactionType;

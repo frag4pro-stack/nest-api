@@ -12,10 +12,23 @@ export class Balance {
   @PrimaryGeneratedColumn()
   id: number;
 
-  @OneToOne(() => User)
-  @JoinColumn()
+  // ✅ FK как обычное поле (ради него всё делаем)
+  @Column({ name: 'userId' })
+  userId: number;
+
+  // ✅ Связь использует тот же столбец userId
+  @OneToOne(() => User, { nullable: false })
+  @JoinColumn({ name: 'userId' })
   user: User;
 
-  @Column({ type: 'numeric', default: 0 })
-  amount: number;
+  @Column({
+  type: 'numeric',
+  default: 0,
+  transformer: {
+    to: (value: number) => value,
+    from: (value: string) => Number(value),
+  },
+})
+amount: number;
+
 }
