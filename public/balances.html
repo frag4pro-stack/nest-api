@@ -7,6 +7,110 @@
   <style>
     body {
       font-family: Arial, sans-serif;
+      padding: 20px;
+      margin: 0;
+    }
+
+    h1 { margin-top: 0; }
+
+    /* ===== MAIN LAYOUT (LEFT USERS + RIGHT CONTENT) ===== */
+    .page {
+      display: flex;
+      gap: 20px;
+      align-items: flex-start;
+    }
+
+    /* ===== LEFT USERS LIST ===== */
+    .sidebar {
+      width: 350px;
+      border: 1px solid #ccc;
+      border-radius: 6px;
+      padding: 12px;
+      position: sticky;
+      top: 20px;
+      background: #fff;
+    }
+
+    .sidebar h2 {
+      margin: 0 0 10px 0;
+      font-size: 18px;
+    }
+
+    .sidebar .row {
+      display: flex;
+      gap: 8px;
+      align-items: center;
+      margin-bottom: 10px;
+    }
+
+    .sidebar input {
+      padding: 5px;
+      width: 100%;
+      box-sizing: border-box;
+    }
+
+    .usersList {
+      list-style: none;
+      padding: 0;
+      margin: 0;
+      max-height: 70vh;
+      overflow: auto;
+      border-top: 1px solid #eee;
+      padding-top: 10px;
+    }
+
+    .usersList li {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      gap: 8px;
+      padding: 8px;
+      border: 1px solid #eee;
+      border-radius: 6px;
+      margin-bottom: 8px;
+    }
+
+    .usersList li:hover {
+      background: #fafafa;
+    }
+
+    .userText {
+      font-size: 14px;
+      line-height: 1.2;
+    }
+
+    .userActions {
+      display: flex;
+      gap: 6px;
+      flex-wrap: wrap;
+      justify-content: flex-end;
+    }
+
+    .smallBtn {
+      padding: 4px 10px;
+      cursor: pointer;
+    }
+
+    /* ===== RIGHT CONTENT BOXES ===== */
+    .content {
+      flex: 1;
+      min-width: 320px;
+    }
+
+    /* ===== BOXES GRID ===== */
+    .container {
+      display: flex;
+      gap: 20px;
+      align-items: flex-start;
+      flex-wrap: wrap; /* чтобы на узком экране переносилось */
+    }
+
+    .box {
+      border: 1px solid #ccc;
+      padding: 15px;
+      width: 300px;
+      border-radius: 6px;
+      background: #fff;
     }
 
     label {
@@ -16,7 +120,8 @@
 
     input {
       padding: 5px;
-      width: 200px;
+      width: 100%;
+      box-sizing: border-box;
     }
 
     button {
@@ -25,89 +130,334 @@
       cursor: pointer;
     }
 
-    .box {
-      border: 1px solid #ccc;
-      padding: 15px;
-      margin-top: 20px;
-      width: 300px;
+    /* ===== RESULT MESSAGE ===== */
+    .result {
+      margin-top: 15px;
+      padding: 10px;
+      border-radius: 5px;
+      display: none;
+      white-space: pre-wrap; /* чтобы текст ошибок красиво переносился */
+    }
+
+    .result.success {
+      display: block;
+      background: #e6ffed;
+      border: 1px solid #2ecc71;
+      color: #1e8449;
+    }
+
+    .result.error {
+      display: block;
+      background: #ffecec;
+      border: 1px solid #e74c3c;
+      color: #922b21;
+    }
+
+    /* ===== SMALL HELP TEXT ===== */
+    .muted {
+      color: #666;
+      font-size: 12px;
+      margin-top: 8px;
+      line-height: 1.3;
+    }
+
+    /* Responsive */
+    @media (max-width: 900px) {
+      .page { flex-direction: column; }
+      .sidebar { width: auto; position: static; }
     }
   </style>
 </head>
 <body>
 
-  <h2>Баланс пользователя</h2>
+<h1>Управление балансами</h1>
 
-  <label>
-    User ID:
-    <input id="userId" type="number">
-  </label>
+<div class="page">
 
-  <button onclick="loadBalance()">Показать баланс</button>
+  <!-- ===== LEFT: USERS LIST ===== -->
+  <aside class="sidebar">
+    <h2>Пользователи</h2>
 
-  <div class="box" id="balanceBox"></div>
+    <div class="row">
+      <input id="userSearch" placeholder="Поиск по login или ID..." oninput="filterUsers()" />
+      <button class="smallBtn" onclick="loadUsers()">Обновить</button>
+    </div>
 
-  <h2>Начислить баланс</h2>
+    <div class="muted">
+      Кнопка <b>Выбрать</b> подставит ID в поле <b>User ID</b> и покажет баланс.
+    </div>
 
-  <label>
-    Сумма:
-    <input id="addAmount" type="number">
-  </label>
+    <ul id="users" class="usersList"></ul>
+  </aside>
 
-  <button onclick="addBalance()">Начислить</button>
+  <!-- ===== RIGHT: BALANCES UI ===== -->
+  <main class="content">
+    <div class="container">
 
-  <h2>Перевод средств</h2>
+      <!-- ===== BALANCE ===== -->
+      <div class="box">
+        <h2>Баланс</h2>
 
-  <label>
-    От (User ID):
-    <input id="fromUserId" type="number">
-  </label>
+        <label>
+          User ID:
+          <input id="userId" type="number" min="1">
+        </label>
 
-  <label>
-    Кому (User ID):
-    <input id="toUserId" type="number">
-  </label>
+        <button onclick="loadBalance()">Показать баланс</button>
 
-  <label>
-    Сумма:
-    <input id="amount" type="number">
-  </label>
+        <div id="balanceBox" style="margin-top:10px;"></div>
+      </div>
 
-  <button onclick="transfer()">Перевести</button>
+      <!-- ===== ADD BALANCE ===== -->
+      <div class="box">
+        <h2>Начислить</h2>
 
-  <script>
-    async function loadBalance() {
-      const userId = document.getElementById('userId').value;
-      const res = await fetch(`/balances/${userId}`);
-      const data = await res.json();
+        <label>
+          Сумма:
+          <input id="addAmount" type="number" min="1">
+        </label>
 
-      document.getElementById('balanceBox').innerHTML = `
-        <p><b>Логин:</b> ${data.user.login}</p>
-        <p><b>Баланс:</b> 💰 ${data.amount}</p>
-      `;
+        <button onclick="addBalance()">Начислить</button>
+      </div>
+
+      <!-- ===== TRANSFER ===== -->
+      <div class="box">
+        <h2>Перевод</h2>
+
+        <label>
+          От (User ID):
+          <input id="fromUserId" type="number" min="1">
+        </label>
+
+        <label>
+          Кому (User ID):
+          <input id="toUserId" type="number" min="1">
+        </label>
+
+        <label>
+          Сумма:
+          <input id="amount" type="number" min="1" step="1">
+        </label>
+
+        <button onclick="transfer()">Перевести</button>
+
+        <div id="transferResult" class="result"></div>
+      </div>
+
+    </div>
+  </main>
+
+</div>
+
+<script>
+  // ====== USERS LIST (как в users.html) ======
+  let ALL_USERS = [];
+
+  async function loadUsers() {
+    const ul = document.getElementById('users');
+    ul.innerHTML = '<li>Загрузка...</li>';
+
+    let res;
+    try {
+      res = await fetch('/users');
+    } catch (e) {
+      ul.innerHTML = '<li>Ошибка: сервер недоступен</li>';
+      return;
     }
 
-    async function addBalance() {
-      const userId = document.getElementById('userId').value;
-      const amount = document.getElementById('addAmount').value;
-
-      await fetch(`/balances/${userId}/add/${amount}`);
-      loadBalance();
+    if (!res.ok) {
+      ul.innerHTML = `<li>Ошибка загрузки пользователей: ${await res.text()}</li>`;
+      return;
     }
 
-    async function transfer() {
-      const fromUserId = Number(document.getElementById('fromUserId').value);
-      const toUserId = Number(document.getElementById('toUserId').value);
-      const amount = Number(document.getElementById('amount').value);
+    const users = await res.json();
+    ALL_USERS = Array.isArray(users) ? users : [];
+    renderUsers(ALL_USERS);
+  }
 
-      await fetch('/balances/transfer', {
+  function renderUsers(users) {
+    const ul = document.getElementById('users');
+    ul.innerHTML = '';
+
+    if (!users.length) {
+      ul.innerHTML = '<li>Пользователей нет</li>';
+      return;
+    }
+
+    users.forEach(user => {
+      const li = document.createElement('li');
+
+      const text = document.createElement('div');
+      text.className = 'userText';
+      text.innerHTML = `<b>#${user.id}</b> — ${user.login}`;
+      li.appendChild(text);
+
+      const actions = document.createElement('div');
+      actions.className = 'userActions';
+
+      // ✅ Выбрать (подставляет ID и показывает баланс)
+      const pickBtn = document.createElement('button');
+      pickBtn.className = 'smallBtn';
+      pickBtn.textContent = 'Выбрать';
+      pickBtn.onclick = async () => {
+        document.getElementById('userId').value = user.id;
+        await loadBalance();
+      };
+
+      // 🗑 Удалить (как в users.html)
+      const deleteBtn = document.createElement('button');
+      deleteBtn.className = 'smallBtn';
+      deleteBtn.textContent = 'Удалить';
+      deleteBtn.onclick = async () => {
+        if (!confirm('Удалить пользователя?')) return;
+
+        const delRes = await fetch(`/users/${user.id}`, { method: 'DELETE' });
+        if (!delRes.ok) {
+          alert('Ошибка удаления: ' + await delRes.text());
+          return;
+        }
+        loadUsers();
+      };
+
+      actions.appendChild(pickBtn);
+      actions.appendChild(deleteBtn);
+
+      li.appendChild(actions);
+      ul.appendChild(li);
+    });
+  }
+
+  function filterUsers() {
+    const q = (document.getElementById('userSearch').value || '').trim().toLowerCase();
+    if (!q) {
+      renderUsers(ALL_USERS);
+      return;
+    }
+
+    const filtered = ALL_USERS.filter(u => {
+      const idStr = String(u.id ?? '');
+      const loginStr = String(u.login ?? '').toLowerCase();
+      return idStr.includes(q) || loginStr.includes(q);
+    });
+
+    renderUsers(filtered);
+  }
+
+  // ====== BALANCES UI ======
+  function showResult(el, type, message) {
+    el.className = 'result ' + type; // success | error
+    el.innerHTML = message;
+    el.style.display = 'block';
+  }
+
+  async function loadBalance() {
+    const userId = document.getElementById('userId').value;
+    const box = document.getElementById('balanceBox');
+
+    if (!userId) {
+      box.innerText = 'Введите User ID';
+      return;
+    }
+
+    const res = await fetch(`${window.location.origin}/balances/${userId}`);
+
+    if (!res.ok) {
+      box.innerText = 'Ошибка: ' + await res.text();
+      return;
+    }
+
+    const data = await res.json();
+
+    box.innerHTML = `
+      <p><b>Логин:</b> ${data?.user?.login ?? '(нет данных)'}</p>
+      <p><b>Баланс:</b> 💰 ${data.amount}</p>
+    `;
+  }
+
+  async function addBalance() {
+    const userId = Number(document.getElementById('userId').value);
+    const amount = Number(document.getElementById('addAmount').value);
+
+    if (!Number.isInteger(userId) || userId <= 0) {
+      alert('Введите корректный User ID');
+      return;
+    }
+
+    if (!Number.isFinite(amount) || amount <= 0) {
+      alert('Введите сумму больше 0');
+      return;
+    }
+
+    const res = await fetch(`${window.location.origin}/balances/${userId}/add/${amount}`, {
+      method: 'POST',
+    });
+
+    if (!res.ok) {
+      alert('Ошибка начисления: ' + await res.text());
+      return;
+    }
+
+    await loadBalance();
+  }
+
+  async function transfer() {
+    const fromUserId = Number(document.getElementById('fromUserId').value);
+    const toUserId = Number(document.getElementById('toUserId').value);
+    const amount = Number(document.getElementById('amount').value);
+
+    const resultBox = document.getElementById('transferResult');
+
+    // Валидация (чтобы не слать NaN)
+    if (!Number.isInteger(fromUserId) || fromUserId <= 0) {
+      showResult(resultBox, 'error', '❌ Введите корректный "От (User ID)"');
+      return;
+    }
+    if (!Number.isInteger(toUserId) || toUserId <= 0) {
+      showResult(resultBox, 'error', '❌ Введите корректный "Кому (User ID)"');
+      return;
+    }
+    if (fromUserId === toUserId) {
+      showResult(resultBox, 'error', '❌ Нельзя переводить самому себе');
+      return;
+    }
+    if (!Number.isFinite(amount) || amount <= 0) {
+      showResult(resultBox, 'error', '❌ Сумма должна быть больше 0');
+      return;
+    }
+
+    const url = `${window.location.origin}/balances/transfer`;
+
+    let res;
+    try {
+      res = await fetch(url, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ fromUserId, toUserId, amount }),
       });
-
-      alert('Перевод выполнен');
+    } catch (e) {
+      showResult(resultBox, 'error', '❌ Сервер недоступен (fetch error)');
+      return;
     }
-  </script>
+
+    const text = await res.text();
+
+    if (!res.ok) {
+      showResult(resultBox, 'error', `❌ Ошибка (${res.status}): ${text}`);
+      return;
+    }
+
+    showResult(resultBox, 'success', `✅ Перевод выполнен успешно`);
+
+    // Авто-обновление баланса, если в поле User ID стоит отправитель/получатель
+    const currentUserId = Number(document.getElementById('userId').value);
+    if (currentUserId === fromUserId || currentUserId === toUserId) {
+      await loadBalance();
+    }
+  }
+
+  // Загружаем список юзеров при открытии страницы
+  window.onload = loadUsers;
+</script>
 
 </body>
 </html>
